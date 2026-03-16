@@ -1,6 +1,6 @@
 #1
 class Soda:
-    def init(self, additive=None):
+    def __init__(self, additive=None):
         # Проверяем, является ли добавка строкой
         if isinstance(additive, str):
             self.additive = additive
@@ -16,7 +16,7 @@ class Soda:
 
 #2
           class TriangleChecker:
-    def init(self, sides):
+    def __init__(self, sides):
         self.sides = sides
 
     def is_triangle(self):
@@ -34,7 +34,7 @@ class Soda:
 
 #3
 class KgToPounds:
-    def init(self, kg):
+    def __init__(self, kg):
         self.__kg = kg  # Приватная переменная
 
     def to_pounds(self):
@@ -51,7 +51,7 @@ class KgToPounds:
 #3.2
 
 class KgToPoundsProperty:
-    def init(self, kg):
+    def __init__(self, kg):
         self.__kg = kg
 
     @property
@@ -70,7 +70,7 @@ class KgToPoundsProperty:
 
 #4
 class RealString:
-    def init(self, string):
+    def __init__(self, string):
         self.string = str(string)
 
     def len(self):
@@ -94,7 +94,7 @@ class RealString:
 #5
 
 class Rectangle:
-    def init(self, width, height):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
 
@@ -114,7 +114,7 @@ class Rectangle:
 #6
 
 class Person:
-    def init(self, name, age, gender):
+    def __init__(self, name, age, gender):
         self._name = name
         self.age = age
         self.gender = gender
