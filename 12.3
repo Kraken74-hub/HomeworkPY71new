@@ -1,0 +1,391 @@
+#1
+class GameCharacter:
+    def __init__(self, name, health, level):
+        self.name = name
+        self.level = level
+        self.health = health
+
+    @property
+    def health(self):
+        return self.__health
+
+    @health.setter
+    def health(self, value):
+        if value > 100:
+            self.__health = 100
+        else:
+            self.__health = value
+
+    def _level_up(self):
+        self.level += 1
+
+    def attack(self, other_character):
+        other_character.health -= 10
+        print(f"{self.name} атаковал {other_character.name}!")
+
+    @classmethod
+    def create_starter(cls, name):
+        return cls(name, 100, 1)
+
+    @staticmethod
+    def compare_levels(char1, char2):
+        if char1.level >= char2.level:
+            return char1
+        return char2
+
+#2
+class Store:
+    def __init__(self, name):
+        self.name = name
+        self.products = []  # Список словарей {"name": ..., "price": ..., "quantity": ...}
+
+    def add_product(self, name, price, quantity):
+        self.products.append({
+            "name": name,
+            "price": price,
+            "quantity": quantity
+        })
+
+    def remove_product(self, name):
+        self.products = [p for p in self.products if p["name"] != name]
+
+    def update_price(self, name, new_price):
+        for product in self.products:
+            if product["name"] == name:
+                product["price"] = new_price
+                break
+
+    def sell_product(self, name, quantity):
+        for product in self.products:
+            if product["name"] == name:
+                if product["quantity"] >= quantity:
+                    product["quantity"] -= quantity
+                    print(f"Продано {quantity} шт. товара {name}")
+                else:
+                    print("Недостаточно товара на складе")
+                return
+
+    def get_inventory(self):
+        return {p["name"]: p["quantity"] for p in self.products}
+
+    def find_most_expensive(self):
+        if not self.products: return None
+        return max(self.products, key=lambda x: x["price"])
+
+    def find_cheapest(self):
+        if not self.products: return None
+        return min(self.products, key=lambda x: x["price"])
+
+#3
+
+class Book:
+    def __init__(self, title, author, year):
+        self.title = title
+        self.author = author
+        self.year = year
+        self.status = "в библиотеке"
+
+    def info(self):
+        print(f"'{self.title}' — {self.author} ({self.year} г.). Статус: {self.status}")
+
+    def mark_as_taken(self):
+        self.status = "выдана"
+
+    def mark_as_returned(self):
+        self.status = "в библиотеке"
+
+
+class Library:
+    def init(self, name):
+        self.name = name
+        self.books = []
+
+    def add_book(self, book):
+        self.books.append(book)
+
+    def remove_book(self, book):
+        if book in self.books:
+            self.books.remove(book)
+
+    def find_by_author(self, author):
+        return [b for b in self.books if b.author == author]
+
+    def find_by_year(self, year):
+        return [b for b in self.books if b.year == year]
+
+    def available_books(self):
+        return [b for b in self.books if b.status == "в библиотеке"]
+
+    def taken_books(self):
+        return [b for b in self.books if b.status == "выдана"]
+
+#4
+class Wallet:
+    def __init__(self, owner, balance=0):
+        self.owner = owner
+        self.__balance = balance
+
+    @property
+    def balance(self):
+        return self.__balance
+
+    def __apply_bonus(self):
+        bonus = self.__balance * 0.01
+        self.__balance += bonus
+        print(f"Начислен бонус: {bonus:.2f}")
+
+    def deposit(self, amount):
+        if amount > 0:
+            self.__balance += amount
+            print(f"Счёт пополнен на {amount}. Текущий баланс: {self.__balance}")
+            self.__apply_bonus()
+        else:
+            print("Сумма пополнения должна быть положительной")
+
+    def withdraw(self, amount):
+        if 0 < amount <= self.__balance:
+            self.__balance -= amount
+            print(f"Снято {amount}. Остаток: {self.__balance}")
+        else:
+            print("Недостаточно средств или неверная сумма")
+
+    def transfer_to(self, other_wallet, amount):
+        if 0 < amount <= self.__balance:
+            self.__balance -= amount
+            other_wallet.deposit(amount)
+            print(f"Перевод {amount} для {other_wallet.owner} выполнен успешно")
+        else:
+            print("Ошибка перевода: недостаточно средств")
+
+    @staticmethod
+    def wallet_info(wallet):
+        print(f"Кошелёк владельца: {wallet.owner}")
+        print(f"Доступный баланс: {wallet.balance}")
+
+#5
+class Order:
+    def __init__(self, order_id, status="новый"):
+        self.order_id = order_id
+        self.items = []  # список словарей {"name": ..., "price": ..., "quantity": ...}
+        self.status = status
+
+    def calculate_total(self):
+        return sum(item['price'] * item['quantity'] for item in self.items)
+
+    def add_item(self, name, price, quantity):
+        self.items.append({"name": name, "price": price, "quantity": quantity})
+
+    def remove_item(self, name):
+        self.items = [item for item in self.items if item['name'] != name]
+
+    def change_status(self, status):
+        self.status = status
+
+
+class OrderSystem:
+    def init(self):
+        self.orders = []
+
+    def create_order(self, order_id):
+        new_order = Order(order_id)
+        self.orders.append(new_order)
+        return new_order
+
+    def get_order_by_id(self, order_id):
+        for order in self.orders:
+            if order.order_id == order_id:
+                return order
+        return None
+
+    def get_total_revenue(self):
+        return sum(order.calculate_total() for order in self.orders if order.status == "завершён")
+
+    def list_orders_by_status(self, status):
+        return [order for order in self.orders if order.status == status]
+
+#6
+from datetime import datetime
+
+class Car:
+    def __init__(self, brand, model, year, fuel_level=0, mileage=0):
+        self.brand = brand
+        self.model = model
+        self.year = year
+        self.fuel_level = fuel_level
+        self.mileage = mileage
+
+    def __check_fuel(self, distance):
+        # Расход 0.1 л на 1 км
+        required_fuel = distance * 0.1
+        return self.fuel_level >= required_fuel
+
+    def drive(self, distance):
+        if self.__check_fuel(distance):
+            self.mileage += distance
+            self.fuel_level -= (distance * 0.1)
+            print(f"Проехали {distance} км.")
+        else:
+            print("Недостаточно топлива для поездки!")
+
+    def refuel(self, liters):
+        self.fuel_level += liters
+        print(f"Заправлено {liters} л. Текущий уровень: {self.fuel_level} л.")
+
+    def info(self):
+        print(f"Авто: {self.brand} {self.model} ({self.year} г.)")
+        print(f"Пробег: {self.mileage} км, Топливо: {self.fuel_level} л.")
+
+    def age(self):
+        current_year = datetime.now().year
+        return current_year - self.year
+
+    @classmethod
+    def from_string(cls, data):
+        brand, model, year = [item.strip() for item in data.split(',')]
+        return cls(brand, model, int(year))
+
+#7
+class Inventory:
+    def __init__(self):
+        self.items = []
+
+    def add_item(self, name, weight, value):
+        item = {"name": name, "weight": weight, "value": value}
+        self.items.append(item)
+
+    def remove_item(self, name):
+        self.items = [item for item in self.items if item["name"] != name]
+
+    def get_total_weight(self):
+        return sum(item["weight"] for item in self.items)
+
+    def get_total_value(self):
+        return sum(item["value"] for item in self.items)
+
+    def find_heaviest(self):
+        if not self.items: return None
+        return max(self.items, key=lambda x: x["weight"])
+
+    def find_most_valuable(self):
+        if not self.items: return None
+        return max(self.items, key=lambda x: x["value"])
+
+    def sort_by_value(self):
+        return sorted(self.items, key=lambda x: x["value"], reverse=True)
+
+    def sort_by_weight(self):
+        return sorted(self.items, key=lambda x: x["weight"])
+
+#8
+class Gym:
+    def __init__(self, gym_name):
+        self.gym_name = gym_name
+        self.clients = []
+
+    def add_client(self, name, age):
+        client = {"name": name, "age": age, "is_active": False}
+        self.clients.append(client)
+
+    def remove_client(self, name):
+        self.clients = [c for c in self.clients if c["name"] != name]
+
+    def activate_membership(self, name):
+        for client in self.clients:
+            if client["name"] == name:
+                client["is_active"] = True
+
+    def deactivate_membership(self, name):
+        for client in self.clients:
+            if client["name"] == name:
+                client["is_active"] = False
+
+    def get_active_members(self):
+        return [c for c in self.clients if c["is_active"]]
+
+    def find_youngest_client(self):
+        if not self.clients: return None
+        return min(self.clients, key=lambda x: x["age"])
+
+    def find_oldest_client(self):
+        if not self.clients: return None
+        return max(self.clients, key=lambda x: x["age"])
+
+    def average_age(self):
+        if not self.clients: return 0
+        total_age = sum(c["age"] for c in self.clients)
+        return total_age / len(self.clients)
+#9
+import random
+
+class playlist:
+    def __init__(self, name):
+        self.name = name
+        self.tracks = [] 
+
+    def add_track(self, name, artist, duration):
+        self.tracks.append({
+            "name": name,
+            "artist": artist,
+            "duration": duration
+        })
+
+    def remove_track(self, name):
+        self.tracks = [t for t in self.tracks if t["name"] != name]
+
+    def total_duration(self):
+        return sum(t["duration"] for t in self.tracks)
+
+    def find_by_artist(self, artist):
+        return [t for t in self.tracks if t["artist"].lower() == artist.lower()]
+
+    def longest_track(self):
+        return max(self.tracks, key=lambda x: x["duration"]) if self.tracks else None
+
+    def shortest_track(self):
+        return min(self.tracks, key=lambda x: x["duration"]) if self.tracks else None
+
+    def shuffle(self):
+        random.shuffle(self.tracks)
+
+    def sort_by_duration(self, reverse=False):
+        self.tracks.sort(key=lambda x: x["duration"], reverse=reverse)
+#10
+class Student:
+    def __init__(self, name):
+        self.name = name
+        self.grades = []
+
+    def add_grade(self, grade):
+        self.grades.append(grade)
+
+    def average_grade(self):
+        return sum(self.grades) / len(self.grades) if self.grades else 0
+
+    def info(self):
+        return f"Студент: {self.name}, Средний балл: {self.average_grade():.2f}"
+
+
+class StudyGroup:
+    def __init__(self, group_name):
+        self.group_name = group_name
+        self.students = []
+
+    def add_student(self, student):
+        self.students.append(student)
+
+    def remove_student(self, name):
+        self.students = [s for s in self.students if s.name != name]
+
+    def find_best_student(self):
+        if not self.students: return None
+        return max(self.students, key=lambda s: s.average_grade())
+
+    def group_average(self):
+        if not self.students: return 0
+        total = sum(s.average_grade() for s in self.students)
+        return total / len(self.students)
+
+    def list_students(self):
+        print(f"Группа: {self.group_name}")
+        for s in self.students:
+            print(s.info())
