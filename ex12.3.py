@@ -320,7 +320,7 @@ import random
 class playlist:
     def __init__(self, name):
         self.name = name
-        self.tracks = [] 
+        self.tracks = []
 
     def add_track(self, name, artist, duration):
         self.tracks.append({

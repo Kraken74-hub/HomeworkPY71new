@@ -1,4 +1,4 @@
-#1
+# 1
 class Soda:
     def __init__(self, additive=None):
         # Проверяем, является ли добавка строкой
@@ -13,26 +13,28 @@ class Soda:
         else:
             print("Обычная газировка")
 
+            # 2
 
-#2
-          class TriangleChecker:
+        class TriangleChecker:
+
     def __init__(self, sides):
         self.sides = sides
 
     def is_triangle(self):
         if not all(isinstance(x, (int, float)) for x in self.sides):
             return "Нужно вводить только числа!"
-        
+
         if any(x <= 0 for x in self.sides):
             return "С отрицательными числами ничего не выйдет!"
-      
+
         a, b, c = sorted(self.sides)
         if a + b > c:
             return "Ура, можно построить треугольник!"
         else:
             return "Жаль, но из этого треугольник не сделать."
 
-#3
+
+# 3
 class KgToPounds:
     def __init__(self, kg):
         self.__kg = kg  # Приватная переменная
@@ -48,7 +50,9 @@ class KgToPounds:
 
     def get_kg(self):
         return self.__kg
-#3.2
+
+
+# 3.2
 
 class KgToPoundsProperty:
     def __init__(self, kg):
@@ -68,14 +72,15 @@ class KgToPoundsProperty:
     def to_pounds(self):
         return self.__kg * 2.205
 
-#4
+
+# 4
 class RealString:
     def __init__(self, string):
         self.string = str(string)
 
     def len(self):
         return len(self.string)
-        
+
     def eq(self, other):
         return len(self) == len(other)
 
@@ -91,7 +96,8 @@ class RealString:
     def ge(self, other):
         return len(self) >= len(other)
 
-#5
+
+# 5
 
 class Rectangle:
     def __init__(self, width, height):
@@ -111,7 +117,8 @@ class Rectangle:
     def is_square(self):
         return self.width == self.height
 
-#6
+
+# 6
 
 class Person:
     def __init__(self, name, age, gender):
