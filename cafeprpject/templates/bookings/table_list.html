@@ -1,0 +1,22 @@
+<h2>Список столиков</h2>
+<form method="get">
+    Фильтр мест: <input type="number" name="seats" placeholder="Мин. мест">
+    <button type="submit">Применить</button>
+</form>
+<table border="1">
+    <tr><th>Фото</th><th>№</th><th>Мест</th><th>Действие</th></tr>
+    {% for table in tables %}
+    <tr>
+        <td><img src="{{ table.image.url }}" width="100"></td>
+        <td>{{ table.number }}</td>
+        <td>{{ table.seats }}</td>
+        <td>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_reservation' %}?table_id={{ table.id }}">Забронировать</a>
+            {% else %}
+                <a href="{% url 'login' %}">Войдите, чтобы забронировать</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
