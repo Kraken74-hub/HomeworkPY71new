@@ -2,23 +2,20 @@ import uuid
 from database import db
 from models import User, Product, Ticket, Order
 
-# Глобальная переменная для хранения авторизованного пользователя
 current_user = None
 
 
 def init_db():
-    """Создает таблицы и наполняет БД ровно 3 стартовыми товарами"""
+
     db.connect()
     db.create_tables([User, Product, Ticket, Order])
 
-    # Проверяем, пуста ли таблица товаров.
-    # Если пуста — создаем ровно 3 товара из условия задания
+
     if Product.select().count() == 0:
         Product.create(name="Картинка с котиком", cost=20, count=50)
         Product.create(name="Наклейка синего цвета", cost=15, count=45)
         Product.create(name="Игральные кости (белые)", cost=25, count=40)
 
-    # Генерируем 3 тестовых тикета для проверки функционала поинтов
     if Ticket.select().count() == 0:
         print("\n--- ТЕСТОВЫЕ ТИКЕТЫ (Скопируйте для проверки) ---")
         for _ in range(3):
@@ -30,10 +27,9 @@ def init_db():
 
 
 def show_products():
-    """Выводит список доступных товаров (кол-во больше 0) с выравниванием по левому краю"""
+
     products = Product.select().where(Product.count > 0)
 
-    # Выравнивание столбцов по левому краю согласно ТЗ
     print(f"{'ID':<10}{'Стоимость':<10}{'Кол-во':<10}{'Название'}")
     print("=" * 55)
     for p in products:
@@ -41,12 +37,11 @@ def show_products():
 
 
 def register():
-    """Регистрация нового пользователя"""
+
     global current_user
     username = input("Введите логин > ")
     password = input("Введите пароль > ")
 
-    # Проверка существования пользователя в БД
     if User.is_exist(username):
         print("Пользователь с таким логином уже существует!")
     else:
@@ -55,7 +50,7 @@ def register():
 
 
 def login():
-    """Авторизация существующего пользователя"""
+
     global current_user
     username = input("Введите логин > ")
     password = input("Введите пароль > ")
@@ -69,7 +64,7 @@ def login():
 
 
 def apply_ticket(command: str):
-    """Обмен тикета на 20 поинтов"""
+
     parts = command.split()
     if len(parts) < 2:
         print("Пожалуйста, введите UUID тикета после команды.")
@@ -77,14 +72,12 @@ def apply_ticket(command: str):
 
     ticket_uuid = parts[1]
 
-    # Проверяем валидность тикета через метод в Ticket
     if Ticket.valid_ticket(ticket_uuid):
         ticket = Ticket.get(Ticket.uuid == ticket_uuid)
-        ticket.available = False  # Делаем тикет неактивным
-        ticket.user = current_user  # Привязываем к текущему юзеру
+        ticket.available = False
+        ticket.user = current_user
         ticket.save()
 
-        # Начисляем поинты
         current_user.points += 20
         current_user.save()
         print(f"Вы успешно обменяли тикет на 20 поинтов!\nТеперь у вас {current_user.points} поинтов")
@@ -93,7 +86,7 @@ def apply_ticket(command: str):
 
 
 def buy(command: str):
-    """Покупка товара с использованием поинтов"""
+
     parts = command.split()
     if len(parts) < 3:
         print("Формат команды: Купить <ID> <Кол-во>")
@@ -114,12 +107,10 @@ def buy(command: str):
 
         total_cost = product.cost * count
 
-        # Проверяем баланс поинтов пользователя
         if current_user.points < total_cost:
             print("Недостаточно поинтов для покупки.")
             return
 
-        # Списываем поинты, уменьшаем остаток товара и фиксируем покупку
         current_user.points -= total_cost
         current_user.save()
 
@@ -136,13 +127,12 @@ def buy(command: str):
 
 
 def profile():
-    """Отображение профиля пользователя и истории его заказов"""
+
     print(f"=== {current_user.username} ===")
     print(f"Поинтов: {current_user.points}")
     print("Заказы:")
     print(f"{'Дата заказа':<20}{'Кол-во':<10}{'Сумма':<10}{'Название'}")
 
-    # Вызываем метод orders() из модели User
     orders = current_user.orders()
     for o in orders:
         dt = o.order_datetime.strftime("%H:%M %d.%m.%Y")
@@ -153,19 +143,16 @@ def profile():
 def main():
     init_db()
 
-    # Бесконечный цикл консольного интерфейса
     while True:
         print('\n=== Добро пожаловать в "Не магазин" ===')
         print('Здесь вы можете обменивать тикеты для того, чтобы приобретать товары')
         print('Для взаимодействия используйте команды:')
 
         if current_user is None:
-            # Команды для гостя
             print('> Товары')
             print('> Зарегистрироваться')
             print('> Войти')
         else:
-            # Команды для авторизованного пользователя
             print('> Товары')
             print('> Купить')
             print('> Профиль')
@@ -176,7 +163,6 @@ def main():
         command = input("\n> ").strip()
         cmd_lower = command.lower()
 
-        # Роутинг команд
         if cmd_lower == "выход":
             break
         elif cmd_lower == "товары":
