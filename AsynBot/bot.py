@@ -30,7 +30,6 @@ async def cmd_timer(message: types.Message):
         return
 
     try:
-        # Пытаемся превратить второе слово в число
         seconds = int(parts[1])
         text = parts[2]
     except ValueError:
@@ -42,7 +41,6 @@ async def cmd_timer(message: types.Message):
 
     await asyncio.sleep(seconds)
 
-    # Время вышло - отправляем ответ на исходное сообщение
     await message.reply(f"⏰ Напоминание: {text}")
 
 
