@@ -1,34 +1,27 @@
 import uuid
-from database import db
+from database import engine, Base, db_session
 from models import User, Product, Ticket, Order
+from sqlalchemy import select, func
 
-current_user = None
+current_user: User | None = None
 
 
 def init_db():
+    Base.metadata.create_all(bind=engine)
 
-    db.connect()
-    db.create_tables([User, Product, Ticket, Order])
+    count = db_session.scalar(select(func.count(Product.id)))
+    if count == 0:
+        p1 = Product(name="Картинка с котиком", cost=20, count=50)
+        p2 = Product(name="Наклейка синего цвета", cost=15, count=45)
+        p3 = Product(name="Игральные кости (белые)", cost=25, count=40)
 
-
-    if Product.select().count() == 0:
-        Product.create(name="Картинка с котиком", cost=20, count=50)
-        Product.create(name="Наклейка синего цвета", cost=15, count=45)
-        Product.create(name="Игральные кости (белые)", cost=25, count=40)
-
-    if Ticket.select().count() == 0:
-        print("\n--- ТЕСТОВЫЕ ТИКЕТЫ (Скопируйте для проверки) ---")
-        for _ in range(3):
-            new_uuid = str(uuid.uuid4())
-            Ticket.create(uuid=new_uuid)
-            print(f"Сгенерирован тикет: {new_uuid}")
-        print("--------------------------------------------------\n")
-    db.close()
+        db_session.add_all([p1, p2, p3])
+        db_session.commit()
 
 
 def show_products():
-
-    products = Product.select().where(Product.count > 0)
+    stmt = select(Product).where(Product.count > 0)
+    products = db_session.scalars(stmt).all()
 
     print(f"{'ID':<10}{'Стоимость':<10}{'Кол-во':<10}{'Название'}")
     print("=" * 55)
@@ -37,34 +30,37 @@ def show_products():
 
 
 def register():
-
     global current_user
-    username = input("Введите логин > ")
-    password = input("Введите пароль > ")
+    username = input("Введите логин > ").strip()
+    password = input("Введите пароль > ").strip()
 
     if User.is_exist(username):
         print("Пользователь с таким логином уже существует!")
     else:
-        current_user = User.create(username=username, password=password)
+        current_user = User(username=username, password=password)
+        db_session.add(current_user)
+        db_session.commit()
         print("Регистрация успешна! Вы вошли в систему.")
 
 
 def login():
-
     global current_user
-    username = input("Введите логин > ")
-    password = input("Введите пароль > ")
+    username = input("Введите логин > ").strip()
+    password = input("Введите пароль > ").strip()
 
-    try:
-        user = User.get((User.username == username) & (User.password == password))
+    stmt = select(User).where(
+        (User.username == username) & (User.password == password)
+    )
+    user = db_session.scalar(stmt)
+
+    if user:
         current_user = user
         print("Успешный вход в систему!")
-    except User.DoesNotExist:
+    else:
         print("Неверный логин или пароль.")
 
 
 def apply_ticket(command: str):
-
     parts = command.split()
     if len(parts) < 2:
         print("Пожалуйста, введите UUID тикета после команды.")
@@ -73,20 +69,20 @@ def apply_ticket(command: str):
     ticket_uuid = parts[1]
 
     if Ticket.valid_ticket(ticket_uuid):
-        ticket = Ticket.get(Ticket.uuid == ticket_uuid)
-        ticket.available = False
-        ticket.user = current_user
-        ticket.save()
+        ticket = db_session.scalar(select(Ticket).where(Ticket.uuid == ticket_uuid))
 
-        current_user.points += 20
-        current_user.save()
-        print(f"Вы успешно обменяли тикет на 20 поинтов!\nТеперь у вас {current_user.points} поинтов")
+        if ticket and current_user:
+            ticket.available = False
+            ticket.user = current_user
+            current_user.points += 20
+
+            db_session.commit()
+            print(f"Вы успешно обменяли тикет на 20 поинтов!\nТеперь у вас {current_user.points} поинтов")
     else:
         print("Данный тикет не существует или уже был использован.")
 
 
 def buy(command: str):
-
     parts = command.split()
     if len(parts) < 3:
         print("Формат команды: Купить <ID> <Кол-во>")
@@ -99,42 +95,44 @@ def buy(command: str):
         print("ID товара и количество должны быть числами.")
         return
 
-    try:
-        product = Product.get(Product.id == product_id)
-        if product.count < count:
-            print("На складе нет такого количества товара.")
-            return
+    product = db_session.get(Product, product_id)
 
-        total_cost = product.cost * count
-
-        if current_user.points < total_cost:
-            print("Недостаточно поинтов для покупки.")
-            return
-
-        current_user.points -= total_cost
-        current_user.save()
-
-        product.count -= count
-        product.save()
-
-        Order.create(user=current_user, product=product, count=count)
-
-        print(f'Вы успешно купили "{product.name}" in количестве: {count}')
-        print(f"У вас осталось {current_user.points} поинтов")
-
-    except Product.DoesNotExist:
+    if not product:
         print("Товар с таким ID не найден.")
+        return
+
+    if product.count < count:
+        print("На складе нет такого количества товара.")
+        return
+
+    total_cost = product.cost * count
+
+    if current_user.points < total_cost:
+        print("Недостаточно поинтов для покупки.")
+        return
+
+    current_user.points -= total_cost
+    product.count -= count
+
+    order = Order(user=current_user, product=product, count=count)
+    db_session.add(order)
+
+    db_session.commit()
+
+    print(f'Вы успешно купили "{product.name}" в количестве: {count}')
+    print(f"У вас осталось {current_user.points} поинтов")
 
 
 def profile():
+    if not current_user:
+        return
 
     print(f"=== {current_user.username} ===")
     print(f"Поинтов: {current_user.points}")
     print("Заказы:")
     print(f"{'Дата заказа':<20}{'Кол-во':<10}{'Сумма':<10}{'Название'}")
 
-    orders = current_user.orders()
-    for o in orders:
+    for o in current_user.orders:
         dt = o.order_datetime.strftime("%H:%M %d.%m.%Y")
         total_sum = o.count * o.product.cost
         print(f"{dt:<20}{o.count:<10}{total_sum:<10}{o.product.name}")
@@ -164,6 +162,7 @@ def main():
         cmd_lower = command.lower()
 
         if cmd_lower == "выход":
+            db_session.remove()  # Закрываем сессию при выходе
             break
         elif cmd_lower == "товары":
             show_products()

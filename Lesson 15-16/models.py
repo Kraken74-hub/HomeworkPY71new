@@ -1,55 +1,68 @@
 import datetime
-from peewee import Model, CharField, IntegerField, BooleanField, ForeignKeyField, DateTimeField
-from database import db
+from typing import List, Optional
+from database import Base, db_session
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 
-class BaseModel(Model):
 
-    class Meta:
-        database = db
+class User(Base):
+    __tablename__ = 'users'
 
-class User(BaseModel):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(30), unique=True)
+    password: Mapped[str] = mapped_column(String(30))
+    points: Mapped[int] = mapped_column(Integer, default=0)
 
-    username = CharField(max_length=30, unique=True) # [cite: 174]
-    password = CharField(max_length=30) # [cite: 178]
-    points = IntegerField(default=0) # [cite: 182]
+    # Связи (Relationship)
+    orders: Mapped[List["Order"]] = relationship(back_populates="user")
+    tickets: Mapped[List["Ticket"]] = relationship(back_populates="user")
 
-    @staticmethod
-    def is_exist(username: str) -> bool:
+    @classmethod
+    def is_exist(cls, username: str) -> bool:
+        stmt = select(cls).where(cls.username == username)
+        return db_session.scalar(stmt) is not None
 
-        try:
-            User.get(User.username == username) # [cite: 45]
-            return True # [cite: 49]
-        except User.DoesNotExist: # [cite: 46]
-            return False # [cite: 48]
 
-    def orders(self) -> list:
+class Product(Base):
+    __tablename__ = 'products'
 
-        return list(Order.select().where(Order.user == self))
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    cost: Mapped[int] = mapped_column(Integer)
+    count: Mapped[int] = mapped_column(Integer)
 
-class Product(BaseModel):
+    orders: Mapped[List["Order"]] = relationship(back_populates="product")
 
-    name = CharField(max_length=255) # [cite: 193]
-    cost = IntegerField()
-    count = IntegerField()
 
-class Ticket(BaseModel):
+class Ticket(Base):
+    __tablename__ = 'tickets'
 
-    uuid = CharField(max_length=36, unique=True)
-    available = BooleanField(default=True)
-    user = ForeignKeyField(User, backref='tickets', null=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[str] = mapped_column(String(36), unique=True)
+    available: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    @staticmethod
-    def valid_ticket(ticket_uuid: str) -> bool:
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), nullable=True)
+    user: Mapped[Optional["User"]] = relationship(back_populates="tickets")
 
-        try:
-            ticket = Ticket.get(Ticket.uuid == ticket_uuid)
-            return ticket.available
-        except Ticket.DoesNotExist:
-            return False
+    @classmethod
+    def valid_ticket(cls, ticket_uuid: str) -> bool:
+        stmt = select(cls).where(cls.uuid == ticket_uuid)
+        ticket = db_session.scalar(stmt)
+        return ticket.available if ticket else False
 
-class Order(BaseModel):
 
-    user = ForeignKeyField(User, backref='orders') # [cite: 172]
-    product = ForeignKeyField(Product, backref='orders') # [cite: 176]
-    count = IntegerField() # [cite: 180]
-    order_datetime = DateTimeField(default=datetime.datetime.now) # [cite: 184]
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
+
+    count: Mapped[int] = mapped_column(Integer)
+    order_datetime: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.now
+    )
+
+    user: Mapped["User"] = relationship(back_populates="orders")
+    product: Mapped["Product"] = relationship(back_populates="orders")

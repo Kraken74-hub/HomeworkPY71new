@@ -1,4 +1,11 @@
-from peewee import SqliteDatabase
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, scoped_session
 
+engine = create_engine("sqlite:///database.db")
 
-db = SqliteDatabase('not_shop.db')
+class Base(DeclarativeBase):
+    pass
+
+SessionLocal = sessionmaker(bind=engine)
+
+db_session = scoped_session(SessionLocal)

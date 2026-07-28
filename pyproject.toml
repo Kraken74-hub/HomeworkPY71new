@@ -3,4 +3,14 @@ name = "homeworkpy71"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "celery==5.6.3",
+    "celery-types>=0.26.0",
+    "django>=6.0.7",
+    "django-redis>=7.0.0",
+    "djangorestframework>=3.17.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "djangorestframework-stubs>=3.17.0",
+    "peewee>=4.2.6",
+    "sqlalchemy==2.1.0b3",
+]
