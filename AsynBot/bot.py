@@ -22,7 +22,6 @@ async def cmd_start(message: types.Message):
 
 @dp.message(Command("timer"))
 async def cmd_timer(message: types.Message):
-    # Разбиваем сообщение на 3 части: /timer, время, текст
     parts = message.text.split(maxsplit=2)
 
     if len(parts) < 3:

@@ -7,7 +7,7 @@ from .models import CustomUser, Event
 
 @shared_task(name="send_email_task")
 def send_email_task(subject, message, recipient_list):
-    """Задача отправки email, работающая в отдельной очереди 'email'"""
+
     send_mail(
         subject=subject,
         message=message,
@@ -19,10 +19,9 @@ def send_email_task(subject, message, recipient_list):
 
 @shared_task
 def send_event_reminders():
-    """Периодическая задача: отправка напоминаний за день (24ч) и за 6 часов"""
+
     now = timezone.now()
 
-    # 1. Напоминания за 24 часа (окно в 15 минут для точной сработки)
     tomorrow_start = now + timedelta(hours=24)
     events_24h = Event.objects.filter(
         meeting_time__gte=tomorrow_start,
@@ -36,7 +35,6 @@ def send_event_reminders():
                    f"Мероприятие проходит завтра в «{event.meeting_time}» «{event.place}».")
             send_email_task.delay("Напоминание о мероприятии", msg, recipients)
 
-    # 2. Напоминания за 6 часов
     in_6h_start = now + timedelta(hours=6)
     events_6h = Event.objects.filter(
         meeting_time__gte=in_6h_start,

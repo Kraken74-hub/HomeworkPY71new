@@ -16,7 +16,6 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 class EventSerializer(serializers.ModelSerializer):
-    # Выводим массив имен пользователей
     users = serializers.SlugRelatedField(
         many=True,
         read_only=True,
